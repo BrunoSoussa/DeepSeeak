@@ -1,7 +1,7 @@
 import requests
 print("Teste")
 url = "https://ia.jm2.tec.br//chat"
-data = {"message": "oi"}
+data = {"message": "gere uma classe em python"}
 
 with requests.post(url, json=data, stream=True) as response:
     for line in response.iter_lines():

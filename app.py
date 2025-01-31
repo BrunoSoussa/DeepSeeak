@@ -28,7 +28,7 @@ def chat():
             for message in response:
                 if "message" in message and "content" in message["message"]:
                     formatted_response = message["message"]["content"].strip()
-                    yield f"data: {formatted_response}\n\n"  # Adiciona a quebra de linha correta
+                    yield f"data: {formatted_response} \n\n"  # Adiciona um espaço no final para evitar palavras grudadas
                 else:
                     app.logger.warning(f"Resposta inválida: {message}")
         except Exception as e:
@@ -36,29 +36,6 @@ def chat():
             yield f"data: Erro interno no servidor\n\n"
 
     return Response(generate(), content_type="text/event-stream")
-
-
-@app.route("/chat-json", methods=["POST"])
-def chat_json():
-    """Versão alternativa para quem deseja resposta em JSON, sem streaming"""
-    data = request.json
-    user_message = data.get("message", "").strip()
-
-    if not user_message:
-        return jsonify({"error": "Mensagem vazia"}), 400
-
-    app.logger.info(f"Mensagem recebida: {user_message}")
-
-    try:
-        response = ollama.chat(
-            model="deepseek-coder-v2",
-            messages=[{"role": "user", "content": user_message}],
-            stream=False,  # Desabilita streaming para JSON
-        )
-        return jsonify(response)
-    except Exception as e:
-        app.logger.error(f"Erro na geração de resposta: {str(e)}")
-        return jsonify({"error": "Erro interno no servidor"}), 500
 
 
 if __name__ == "__main__":
