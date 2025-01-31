@@ -10,7 +10,7 @@ def chat():
 
     def generate():
         response = ollama.chat(
-            model="deepseek-coder:latest",
+            model="deepseek-coder-v2",
             messages=[{"role": "user", "content": user_message}],
             stream=True, 
         )
