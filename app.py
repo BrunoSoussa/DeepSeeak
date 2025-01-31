@@ -28,7 +28,7 @@ def chat():
             for message in response:
                 if "message" in message and "content" in message["message"]:
                     formatted_response = message["message"]["content"]
-                    yield f"data: {formatted_response} \n\n"  # Adiciona um espaço no final para evitar palavras grudadas
+                    yield f"data: {formatted_response}"  # Adiciona um espaço no final para evitar palavras grudadas
                 else:
                     app.logger.warning(f"Resposta inválida: {message}")
         except Exception as e:
