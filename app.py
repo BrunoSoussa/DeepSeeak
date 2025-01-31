@@ -29,6 +29,7 @@ def chat():
         except Exception as e:
             app.logger.error(f"Erro no streaming: {str(e)}")
             yield f"Erro interno no servidor\n\n"
+    return Response(generate(), content_type="text/event-stream")
 
 
 if __name__ == "__main__":
