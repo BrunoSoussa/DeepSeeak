@@ -21,10 +21,16 @@ def chat():
     def generate():
         try:
             response = ollama.chat(
-                model="deepseek-coder-v2",
-                messages=[{"role": "user", "content": user_message}],
-                stream=True,
+            model="deepseek-coder-v2",
+            messages=[{"role": "user", "content": user_message}],
+            stream=True,  # Mantém o streaming ativado
+            max_tokens=512,  # Define um limite razoável para resposta
+            temperature=0.7,  # Mantém um bom equilíbrio entre criatividade e coerência
+            top_p=0.95,  # Foca nas respostas mais prováveis, sem limitar muito a criatividade
+            n=1,  # Retorna apenas uma resposta (o padrão para chatbots)
+            stop=None  # Evita cortar frases abruptamente
             )
+
             for message in response:
                 if "message" in message and "content" in message["message"]:
                     
