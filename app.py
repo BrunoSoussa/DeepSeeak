@@ -23,12 +23,19 @@ def chat():
             response = ollama.chat(
                 model="deepseek-coder-v2",
                 messages=[{"role": "user", "content": user_message}],
-                stream=True, 
+                stream=True,
             )
             for message in response:
                 if "message" in message and "content" in message["message"]:
+                    # Converta a string retornada pelo Ollama (com quebras de linha)
                     formatted_response = message["message"]["content"]
-                    yield f"data: {formatted_response}"  # Adiciona um espaço no final para evitar palavras grudadas
+
+                    # Envie cada evento SSE com uma linha em branco ao final
+                    # para indicar o fim do evento.
+                    #
+                    # O \n\n (duas quebras de linha) é obrigatório no SSE para
+                    # indicar o término do bloco de dados.
+                    yield f"data: {formatted_response}\n\n"
                 else:
                     app.logger.warning(f"Resposta inválida: {message}")
         except Exception as e:
