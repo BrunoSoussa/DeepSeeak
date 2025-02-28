@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepSeeak Chat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/antd@5.14.1/dist/reset.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/antd@5.14.1/dist/antd.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --secondary-color: #f0f0f0;
+            --user-message-bg: #3b82f6;
+            --bot-message-bg: #f0f0f0;
+            --dark-code-bg: #282c34;
+        }
+        
+        body {
+            background-color: #f9fafb;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .chat-container {
+            height: calc(100vh - 10rem);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .message {
+            max-width: 80%;
+            margin: 12px;
+            padding: 14px;
+            border-radius: 16px;
+            white-space: pre-wrap;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            background-color: var(--user-message-bg);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .bot-message {
+            background-color: var(--bot-message-bg);
+            color: #333;
+            border-bottom-left-radius: 4px;
+            overflow-x: auto;
+        }
+        
+        .bot-message pre {
+            background-color: var(--dark-code-bg) !important;
+            border-radius: 8px;
+            padding: 14px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        
+        .bot-message code {
+            font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+        
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 8px 16px;
+        }
+        
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #888;
+            border-radius: 50%;
+            animation: typing 1.2s infinite;
+        }
+        
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        /* Markdown Styles */
+        .bot-message p {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        
+        .bot-message h1, .bot-message h2, .bot-message h3 {
+            margin: 18px 0 10px 0;
+            font-weight: bold;
+            color: #222;
+        }
+        
+        .bot-message ul, .bot-message ol {
+            margin: 10px 0;
+            padding-left: 24px;
+        }
+        
+        .bot-message li {
+            margin: 6px 0;
+            line-height: 1.4;
+        }
+        
+        .model-selector {
+            background-color: white;
+            border-radius: 8px;
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            font-size: 0.9rem;
+            color: #374151;
+            min-width: 200px;
+            margin-right: 12px;
+            transition: all 0.2s;
+        }
+        
+        .model-selector:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        .app-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 12px;
+        }
+        
+        .app-title {
+            margin-bottom: 12px;
+        }
+        
+        .model-badge {
+            font-size: 0.7rem;
+            background-color: #dbeafe;
+            color: #1e40af;
+            border-radius: 50px;
+            padding: 2px 8px;
+            margin-left: 8px;
+        }
+        
+        .button-primary {
+            background-color: var(--primary-color);
+            color: white;
+            transition: all 0.2s;
+        }
+        
+        .button-primary:hover {
+            background-color: var(--primary-hover);
+        }
+        
+        .button-clear {
+            background-color: #ef4444;
+            color: white;
+            transition: all 0.2s;
+        }
+        
+        .button-clear:hover {
+            background-color: #dc2626;
+        }
+        
+        .model-controls {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="app-header">
+                <h1 class="text-3xl font-bold text-center app-title text-gray-800">
+                    DeepSeeak Chat
+                    <span class="text-blue-500">Assistant</span>
+                </h1>
+                
+                <div class="model-controls">
+                    <select id="modelSelector" class="model-selector">
+                        <option value="deepseek-coder-v2:16b">DeepSeek Coder v2 (16B)</option>
+                        <option value="deepseek-r1:14b">DeepSeek R1 (14B)</option>
+                        <option value="deepseek-coder:latest">DeepSeek Coder (latest)</option>
+                    </select>
+                    
+                    <span id="currentModel" class="model-badge">deepseek-coder-v2:16b</span>
+                </div>
+            </div>
+            
+            <!-- Chat Container -->
+            <div class="chat-container flex flex-col">
+                <!-- Messages Area -->
+                <div id="messages" class="flex-1 overflow-y-auto mb-4 p-4 space-y-4"></div>
+                
+                <!-- Input Area -->
+                <div class="border-t pt-4">
+                    <div class="flex gap-2">
+                        <input type="text" 
+                               id="messageInput"
+                               class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="Digite sua mensagem..."
+                               onkeypress="if(event.key === 'Enter') sendMessage()">
+                        <button onclick="sendMessage()"
+                                class="px-6 py-3 button-primary rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center gap-2">
+                            <span>Enviar</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Adiciona botão de limpar histórico -->
+    <div class="fixed top-4 right-4">
+        <button onclick="clearChat()" 
+                class="px-4 py-2 button-clear rounded-lg transition-colors duration-200">
+            Limpar Chat
+        </button>
+    </div>
+
+    <script>
+        // Configure marked.js
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (Prism.languages[lang]) {
+                    return Prism.highlight(code, Prism.languages[lang], lang);
+                }
+                return code;
+            }
+        });
+
+        function formatMessage(content) {
+            // Check if the content contains code blocks
+            if (content.includes('```')) {
+                return marked.parse(content);
+            }
+            return content;
+        }
+
+        // Array para armazenar o histórico de mensagens
+        let messageHistory = [];
+        
+        // Atualiza o badge do modelo quando o seletor muda
+        document.getElementById('modelSelector').addEventListener('change', function() {
+            document.getElementById('currentModel').textContent = this.value;
+        });
+
+        function appendMessage(content, isUser) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            // Cria um objeto de mensagem
+            const messageObj = {
+                role: isUser ? "user" : "assistant",
+                content: content
+            };
+            
+            if (isUser) {
+                messageDiv.textContent = content;
+                // Adiciona mensagem do usuário ao histórico
+                messageHistory.push(messageObj);
+            } else {
+                messageDiv.innerHTML = formatMessage(content);
+                if (content) { // Só adiciona ao histórico se tiver conteúdo
+                    messageHistory.push(messageObj);
+                }
+            }
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            
+            // Debug do histórico
+            console.log("Histórico atual:", JSON.stringify(messageHistory, null, 2));
+            
+            // Highlight all code blocks
+            if (!isUser) {
+                messageDiv.querySelectorAll('pre code').forEach((block) => {
+                    Prism.highlightElement(block);
+                });
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            const selectedModel = document.getElementById('modelSelector').value;
+            
+            if (!message) return;
+            
+            // Append user message
+            appendMessage(message, true);
+            input.value = '';
+            
+            // Show typing indicator
+            showTypingIndicator();
+            
+            try {
+                console.log("Enviando histórico:", JSON.stringify(messageHistory, null, 2));
+                console.log("Modelo selecionado:", selectedModel);
+                
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        message,
+                        history: messageHistory.slice(0, -1), // Envia histórico sem a última mensagem
+                        model: selectedModel
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const reader = response.body.getReader();
+                let botResponse = '';
+                removeTypingIndicator();
+                
+                // Não adiciona mensagem vazia ao histórico aqui
+                const tempMessageDiv = document.createElement('div');
+                tempMessageDiv.className = 'message bot-message';
+                document.getElementById('messages').appendChild(tempMessageDiv);
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    
+                    if (done) break;
+                    
+                    // Convert the chunk to text
+                    const chunk = new TextDecoder().decode(value);
+                    botResponse += chunk;
+                    
+                    // Update the temporary message
+                    tempMessageDiv.innerHTML = formatMessage(botResponse);
+                    tempMessageDiv.querySelectorAll('pre code').forEach((block) => {
+                        Prism.highlightElement(block);
+                    });
+                }
+
+                // Adiciona a resposta completa ao histórico
+                messageHistory.push({
+                    role: "assistant",
+                    content: botResponse
+                });
+                
+                console.log("Histórico atualizado:", JSON.stringify(messageHistory, null, 2));
+
+            } catch (error) {
+                console.error('Error:', error);
+                removeTypingIndicator();
+                appendMessage('Erro ao processar sua mensagem. Por favor, tente novamente.', false);
+            }
+        }
+
+        function showTypingIndicator() {
+            const messagesDiv = document.getElementById('messages');
+            const indicatorDiv = document.createElement('div');
+            indicatorDiv.id = 'typingIndicator';
+            indicatorDiv.className = 'message bot-message typing-indicator';
+            indicatorDiv.innerHTML = `
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            `;
+            messagesDiv.appendChild(indicatorDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
+        function clearChat() {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            messageHistory = [];
+            console.log("Chat limpo. Histórico resetado.");
+        }
+        
+        // Enable Enter key to send message
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
